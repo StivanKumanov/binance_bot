@@ -1,0 +1,4 @@
+pandas_ta
+python-binance
+
+pandas~=1.5.2

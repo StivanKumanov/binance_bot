@@ -1,9 +1,6 @@
 from data.MarketDataRepository import MarketDataRepository
 from services.IndicatorsCalculator import IndicatorsCalculator
+from services.TradeOrchestrator import TradeOrchestrator
 
-repo = MarketDataRepository()
-symbol = 'BTCUSDT'
-test = IndicatorsCalculator()
-# ma = test.get_50_moving_average(symbol)
-# ma200 = test.get_200_moving_average(symbol)
-rsi = test.get_rsi(symbol)
+t = TradeOrchestrator()
+t.try_to_buy()

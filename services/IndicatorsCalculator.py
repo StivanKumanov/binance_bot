@@ -1,4 +1,5 @@
 import pandas_ta as ta
+from finta import TA
 from data.MarketDataRepository import MarketDataRepository
 from pandas import Series
 
@@ -7,29 +8,31 @@ class IndicatorsCalculator:
     def __init__(self):
         self.market_data = MarketDataRepository()
 
-    def get_50_moving_average(self, symbol):
-        close_prices = Series(self.market_data.get_close_prices(symbol))
-        moving_average = ta.sma(close_prices, 50).array[-1]
+    def get_50_moving_average(self, symbol, ticks):
+        length = 50
+        close_prices = Series(self.market_data.get_close_prices(symbol, limit=length + ticks))
+        moving_average = ta.sma(close_prices, length).array[-ticks:]
         return moving_average
 
-    def get_200_moving_average(self, symbol):
+    def get_200_moving_average(self, symbol, ticks):
         length = 200
-        close_prices = Series(self.market_data.get_close_prices(symbol, limit=length))
-        moving_average = ta.sma(close_prices, length).array[-1]
+        close_prices = Series(self.market_data.get_close_prices(symbol, limit=length + ticks))
+        moving_average = ta.sma(close_prices, length).array[-ticks:]
         return moving_average
 
-    def get_rsi(self, symbol):
+    def get_rsi(self, symbol, ticks):
         # TODO: configure the length parameter
         length = 50
-        close_prices = Series(self.market_data.get_close_prices(symbol, limit=51))
+        close_prices = Series(self.market_data.get_close_prices(symbol, limit=length + ticks))
         rsi = ta.rsi(close_prices, length)
         return rsi
 
     def get_dmi(self, symbol):
         length = 50
-        high_prices = Series(self.market_data.get_high_prices(symbol, limit=70))
-        low_prices = Series(self.market_data.get_low_prices(symbol, limit=70))
-        dmi = ta.dm(high_prices, low_prices, length)
-        print(dmi)
+        high_prices = Series(self.market_data.get_high_prices(symbol, limit=length + 1))
+        low_prices = Series(self.market_data.get_low_prices(symbol, limit=length + 1))
+        dmi = ta.dm(high=high_prices, low=low_prices, length=length, mamode="sma", drift=0)
+        finta = TA()
+
         return dmi
 

@@ -1,11 +1,12 @@
-from binance import Client
+from binance.client import Client
 
 
 class MarketDataRepository:
     def __init__(self):
         self.client = Client()
 
-    def get_futures_symbols(self):
+    def get_futures_symbols(self, min_daily_volume):
+        # TODO: filter by volume
         futures_exchange_info = self.client.futures_exchange_info()
         symbols = [info['symbol'] for info in futures_exchange_info['symbols'] if info['symbol'] != 'BTCUSDT'
                    and info['symbol'] != 'ETHUSDT']

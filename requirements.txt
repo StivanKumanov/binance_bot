@@ -1,4 +1,4 @@
 pandas_ta
 python-binance
-
+binance-futures-connector
 pandas~=1.5.2

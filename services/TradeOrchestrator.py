@@ -1,11 +1,14 @@
 from services.IndicatorsCalculator import IndicatorsCalculator
+from services.OrdersManager import OrdersManager
 from data.MarketDataRepository import MarketDataRepository
 from binance.exceptions import BinanceAPIException
+from binance.error import ClientError
 
 
 class TradeOrchestrator:
     def __init__(self):
         self.calculator = IndicatorsCalculator()
+        self.orders_manager = OrdersManager()
         self.market_data = MarketDataRepository()
 
     def _check_ma(self, ma_50s, ma_200s):
@@ -25,7 +28,7 @@ class TradeOrchestrator:
         highest_point = rsi.max()
         current_rsi = rsi[-1]
         prices = self.market_data.get_close_prices(symbol, limit=2)
-        price_increased = prices[1] >= prices[0] * 1.2
+        price_increased = prices[1] >= prices[0] * 1.2 #TODO: get price at highest point of rsi
         if current_rsi < highest_point and price_increased:
             return True
         return False
@@ -45,9 +48,14 @@ class TradeOrchestrator:
                 should_buy = self.check_conditions(ma_50, ma_200, rsi, dmi, symbol)
 
                 if should_buy:
-                    pass
+                    activation_price = ma_200[-1]
+                    self.orders_manager.open_short(symbol, activation_price)
+
             except BinanceAPIException as ex:
                 print(symbol, ex.message)
+
+            except ClientError as ex:
+                print(symbol, ex)
 
     def check_conditions(self, ma_50, ma_200, rsi, dmi, symbol):
         eligible_to_buy = self._check_ma(ma_50, ma_200) and self._check_rsi(rsi, symbol)

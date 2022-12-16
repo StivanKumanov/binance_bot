@@ -33,3 +33,20 @@ class IndicatorsCalculator:
         dmi = ta.adx(high=high_prices, low=low_prices, close=close_prices, mamode="sma", length=length)["DMP_50"].array[-1]
         return dmi
 
+    def get_rsi_and_price(self, symbol, rsi):
+        ticks = len(rsi)
+        close_prices = self.market_data.get_close_prices(symbol, limit=ticks)
+        highest_rsi = rsi.max()
+        rsi_index = -1
+        for x in range(ticks):
+            if rsi[x] == highest_rsi:
+                rsi_index = x
+
+        price = close_prices[rsi_index]
+        return {
+            "rsi": rsi[-1],
+            "highest_rsi": highest_rsi,
+            "price_at_rsi": price,
+            "current_price": close_prices[-1]
+        }
+

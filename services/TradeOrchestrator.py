@@ -1,6 +1,7 @@
 from services.IndicatorsCalculator import IndicatorsCalculator
 from services.OrdersManager import OrdersManager
 from data.MarketDataRepository import MarketDataRepository
+from data.AccountDataRepository import AccountDataRepository
 from binance.exceptions import BinanceAPIException
 from binance.error import ClientError
 
@@ -10,6 +11,7 @@ class TradeOrchestrator:
         self.calculator = IndicatorsCalculator()
         self.orders_manager = OrdersManager()
         self.market_data = MarketDataRepository()
+        self.account_data = AccountDataRepository()
 
     def _check_ma(self, ma_50s, ma_200s):
         if len(ma_50s) != len(ma_200s):
@@ -25,11 +27,23 @@ class TradeOrchestrator:
         return result
 
     def _check_rsi(self, rsi, symbol):
-        highest_point = rsi.max()
-        current_rsi = rsi[-1]
-        prices = self.market_data.get_close_prices(symbol, limit=2)
-        price_increased = prices[1] >= prices[0] * 1.2 #TODO: get price at highest point of rsi
-        if current_rsi < highest_point and price_increased:
+        rsi_and_price = self.calculator.get_rsi_and_price(symbol, rsi)
+        highest_rsi = rsi_and_price["highest_rsi"]
+        current_rsi = rsi_and_price["current_price"]
+        price_at_rsi = rsi_and_price["price_at_rsi"]
+        current_price = rsi_and_price["current_price"]
+
+        price_increased = current_price >= price_at_rsi * 1.2
+        if current_rsi < highest_rsi and price_increased:
+            return True
+        return False
+
+    def _check_dmi(self, dmi):
+        return True
+
+    def _check_positions_count(self):
+        positions = self.account_data.get_account_positions()
+        if len(positions) <= 5:
             return True
         return False
 
@@ -49,7 +63,10 @@ class TradeOrchestrator:
 
                 if should_buy:
                     activation_price = ma_200[-1]
-                    self.orders_manager.open_short(symbol, activation_price)
+                    current_price = self.market_data.get_current_price(symbol)
+                    tr_stop_order_response = self.orders_manager.open_short_trailing_stop(symbol, activation_price, current_price)
+                    limit_order_response = self.orders_manager.open_limit_orders(3, symbol, current_price)
+                    print(tr_stop_order_response, limit_order_response)
 
             except BinanceAPIException as ex:
                 print(symbol, ex.message)
@@ -58,5 +75,6 @@ class TradeOrchestrator:
                 print(symbol, ex)
 
     def check_conditions(self, ma_50, ma_200, rsi, dmi, symbol):
-        eligible_to_buy = self._check_ma(ma_50, ma_200) and self._check_rsi(rsi, symbol)
+        less_than_5_positions = self._check_positions_count()
+        eligible_to_buy = self._check_ma(ma_50, ma_200) and self._check_rsi(rsi, symbol) and less_than_5_positions and self._check_dmi(dmi)
         return eligible_to_buy

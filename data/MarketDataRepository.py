@@ -14,6 +14,10 @@ class MarketDataRepository:
 
     # TODO: think about using decimal instead of float
 
+    def get_current_price(self, symbol):
+        info = self.client.get_ticker(symbol=symbol)
+        return float(info["lastPrice"])
+
     def get_close_prices(self, symbol, interval='4h', limit=50):
         klines_data = self.client.get_klines(symbol=symbol, interval=interval, limit=limit)
         close_price_index = 4
@@ -31,3 +35,5 @@ class MarketDataRepository:
         low_price_index = 3
         low_prices = [float(x[low_price_index]) for x in klines_data]
         return low_prices
+
+

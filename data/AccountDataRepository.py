@@ -6,14 +6,18 @@ import time
 
 class AccountDataRepository:
     def __init__(self):
-        # self.client = Client(settings.BINANCE_API_KEY, settings.BINANCE_API_SECRET, testnet=True)
         self.client = UMFutures(settings.BINANCE_API_KEY, settings.BINANCE_API_SECRET, base_url="https://testnet.binancefuture.com")
 
-
-    def get_orders(self):
+    def get_account_positions(self):
         params = {
             "timestamp": time.time(),
             "recvWindow": 600000
         }
-        orders = self.client.get_orders(**params)
-        pass
+        all_positions = self.client.account(**params)["positions"]
+        account_positions = []
+        for position in all_positions:
+            entry_price = float(position['entryPrice'])
+            if entry_price > 0:
+                account_positions.append(position)
+
+        return account_positions

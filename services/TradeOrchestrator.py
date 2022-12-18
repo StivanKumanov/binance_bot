@@ -59,7 +59,7 @@ class TradeOrchestrator:
                 # TODO: Last candle close
                 dmi = self.calculator.get_dmi(symbol)
                 rsi = self.calculator.get_rsi(symbol, rsi_ticks)
-                should_buy = self.check_conditions(ma_50, ma_200, rsi, dmi, symbol)
+                should_buy = self._check_conditions(ma_50, ma_200, rsi, dmi, symbol)
 
                 if should_buy:
                     activation_price = ma_200[-1]
@@ -74,7 +74,7 @@ class TradeOrchestrator:
             except ClientError as ex:
                 print(symbol, ex)
 
-    def check_conditions(self, ma_50, ma_200, rsi, dmi, symbol):
+    def _check_conditions(self, ma_50, ma_200, rsi, dmi, symbol):
         less_than_5_positions = self._check_positions_count()
         eligible_to_buy = self._check_ma(ma_50, ma_200) and self._check_rsi(rsi, symbol) and less_than_5_positions and self._check_dmi(dmi)
         return eligible_to_buy

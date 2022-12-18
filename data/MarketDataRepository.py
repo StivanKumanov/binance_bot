@@ -1,5 +1,5 @@
 from binance.client import Client
-
+from binance.exceptions import BinanceAPIException
 
 class MarketDataRepository:
     def __init__(self):
@@ -8,11 +8,22 @@ class MarketDataRepository:
     def get_futures_symbols(self, min_daily_volume):
         # TODO: filter by volume
         futures_exchange_info = self.client.futures_exchange_info()
-        symbols = [info['symbol'] for info in futures_exchange_info['symbols'] if info['symbol'] != 'BTCUSDT'
-                   and info['symbol'] != 'ETHUSDT']
-        return symbols
 
-    # TODO: think about using decimal instead of float
+        symbols = [info["symbol"] for info in futures_exchange_info['symbols'] if info['symbol'] != 'BTCUSDT'
+                   and info['symbol'] != 'ETHUSDT']
+        
+        filtered = symbols[0:25]
+        # for symbol in futures_exchange_info['symbols']:
+        #     try:
+        #         if symbol['symbol'] != 'BTCUSDT' and symbol['symbol'] != 'ETHUSDT':
+        #             ticker = self.client.get_ticker(symbol=symbol["symbol"])
+        #             if float(ticker["quoteVolume"]) >= min_daily_volume:
+        #                 filtered.append(symbol["symbol"])
+
+        #     except BinanceAPIException as ex:
+        #         print(ex)
+
+        return filtered
 
     def get_current_price(self, symbol):
         info = self.client.get_ticker(symbol=symbol)

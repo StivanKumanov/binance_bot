@@ -4,8 +4,8 @@ from pandas import Series
 
 
 class IndicatorsCalculator:
-    def __init__(self):
-        self.market_data = MarketDataRepository()
+    def __init__(self, market_data: MarketDataRepository):
+        self.market_data = market_data
 
     def get_50_moving_average(self, symbol, ticks):
         length = 50

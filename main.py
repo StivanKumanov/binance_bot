@@ -5,10 +5,8 @@ from services.OrdersManager import OrdersManager
 from data.AccountDataRepository import AccountDataRepository
 
 m = MarketDataRepository()
-t = TradeOrchestrator()
+i = IndicatorsCalculator(m)
 a = AccountDataRepository()
 o = OrdersManager()
+t = TradeOrchestrator(i,o,m,a)
 t.try_to_buy()
-# o.open_short("BCHUSDT", 0)
-# t = a.get_account_positions()
-# print(t)

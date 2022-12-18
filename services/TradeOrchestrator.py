@@ -1,17 +1,42 @@
-from services.IndicatorsCalculator import IndicatorsCalculator
-from services.OrdersManager import OrdersManager
-from data.MarketDataRepository import MarketDataRepository
-from data.AccountDataRepository import AccountDataRepository
 from binance.exceptions import BinanceAPIException
 from binance.error import ClientError
-
+import logging
 
 class TradeOrchestrator:
-    def __init__(self):
-        self.calculator = IndicatorsCalculator()
-        self.orders_manager = OrdersManager()
-        self.market_data = MarketDataRepository()
-        self.account_data = AccountDataRepository()
+    def __init__(self, calculator, orders_manager, market_data, account_data):
+        self.calculator = calculator
+        self.orders_manager = orders_manager
+        self.market_data = market_data
+        self.account_data = account_data
+
+    def try_to_buy(self):
+        min_daily_volume = 1000000
+        symbols = self.market_data.get_futures_symbols(min_daily_volume)
+        ticks = 25
+        rsi_ticks = 50
+        for symbol in symbols:
+            try:
+                ma_50 = self.calculator.get_50_moving_average(symbol, ticks)
+                ma_200 = self.calculator.get_200_moving_average(symbol, ticks)
+                # TODO: Last candle close
+                dmi = self.calculator.get_dmi(symbol)
+                rsi = self.calculator.get_rsi(symbol, rsi_ticks)
+                should_buy = self._check_conditions(ma_50, ma_200, rsi, dmi, symbol)
+
+                if should_buy:
+                    activation_price = ma_200[-1]
+                    current_price = self.market_data.get_current_price(symbol)
+                    tr_stop_order_response = self.orders_manager.open_short_trailing_stop(symbol, activation_price, current_price)
+                    limit_order_response = self.orders_manager.open_limit_orders(3, symbol, current_price)
+                    logging.info(tr_stop_order_response, limit_order_response)
+                else:
+                    print(symbol)
+
+            except BinanceAPIException as ex:
+                logging.error(symbol, ex.message)
+
+            except ClientError as ex:
+                logging.error(symbol, ex)
 
     def _check_ma(self, ma_50s, ma_200s):
         if len(ma_50s) != len(ma_200s):
@@ -47,32 +72,6 @@ class TradeOrchestrator:
             return True
         return False
 
-    def try_to_buy(self):
-        min_daily_volume = 25000000
-        symbols = self.market_data.get_futures_symbols(min_daily_volume)
-        ticks = 25
-        rsi_ticks = 50
-        for symbol in symbols:
-            try:
-                ma_50 = self.calculator.get_50_moving_average(symbol, ticks)
-                ma_200 = self.calculator.get_200_moving_average(symbol, ticks)
-                # TODO: Last candle close
-                dmi = self.calculator.get_dmi(symbol)
-                rsi = self.calculator.get_rsi(symbol, rsi_ticks)
-                should_buy = self._check_conditions(ma_50, ma_200, rsi, dmi, symbol)
-
-                if should_buy:
-                    activation_price = ma_200[-1]
-                    current_price = self.market_data.get_current_price(symbol)
-                    tr_stop_order_response = self.orders_manager.open_short_trailing_stop(symbol, activation_price, current_price)
-                    limit_order_response = self.orders_manager.open_limit_orders(3, symbol, current_price)
-                    print(tr_stop_order_response, limit_order_response)
-
-            except BinanceAPIException as ex:
-                print(symbol, ex.message)
-
-            except ClientError as ex:
-                print(symbol, ex)
 
     def _check_conditions(self, ma_50, ma_200, rsi, dmi, symbol):
         less_than_5_positions = self._check_positions_count()

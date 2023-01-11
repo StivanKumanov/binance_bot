@@ -23,14 +23,14 @@ class TradeOrchestrator:
                 rsi = self.calculator.get_rsi(symbol, rsi_ticks)
                 should_buy = self._check_conditions(ma_50, ma_200, rsi, dmi, symbol)
 
-                if should_buy:
+                if should_buy or True:
                     activation_price = ma_200[-1]
                     current_price = self.market_data.get_current_price(symbol)
                     tr_stop_order_response = self.orders_manager.open_short_trailing_stop(symbol, activation_price, current_price)
                     limit_order_response = self.orders_manager.open_limit_orders(3, symbol, current_price)
                     logging.info(tr_stop_order_response, limit_order_response)
                 else:
-                    print(symbol)
+                    logging.info('')
 
             except BinanceAPIException as ex:
                 logging.error(symbol, ex.message)

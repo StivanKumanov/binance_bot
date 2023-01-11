@@ -12,16 +12,10 @@ class MarketDataRepository:
         symbols = [info["symbol"] for info in futures_exchange_info['symbols'] if info['symbol'] != 'BTCUSDT'
                    and info['symbol'] != 'ETHUSDT']
         
+        test = self.client.get_ticker(symbol='BTCUSDT')
         filtered = symbols[0:25]
-        # for symbol in futures_exchange_info['symbols']:
-        #     try:
-        #         if symbol['symbol'] != 'BTCUSDT' and symbol['symbol'] != 'ETHUSDT':
-        #             ticker = self.client.get_ticker(symbol=symbol["symbol"])
-        #             if float(ticker["quoteVolume"]) >= min_daily_volume:
-        #                 filtered.append(symbol["symbol"])
-
-        #     except BinanceAPIException as ex:
-        #         print(ex)
+       
+       
 
         return filtered
 
